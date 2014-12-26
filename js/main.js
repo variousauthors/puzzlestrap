@@ -78,13 +78,48 @@ ImageContext = function ImageContext (src, w, h) {
 },
 
 PuzzleTile = function PuzzleTile () {
-    var puzzle_tile = {};
+    var puzzle_tile = {}, colors = {}, color_index = 0, map = [], current_row = 0,
+        cached_string;
 
     puzzle_tile.toString = function toString () {
-        return "";
+
+        return cached_string || (cached_string = [
+            Object.keys(colors).join(" "),
+            map.join("\n")
+        ].join("\n"));
     };
 
-    return {};
+    puzzle_tile.addColor = function addColor (hex) {
+        var symbol, color = "#" + hex;
+
+        if (colors[color] !== undefined) return colors[color];
+
+        symbol = color_index;
+        colors[color] = color_index;
+        color_index = color_index + 1;
+
+        return symbol;
+    };
+
+    puzzle_tile.pushSymbol = function pushSymbol (symbol) {
+        // if the map is full, return false
+        if (current_row > 4) return false;
+
+        if (map[current_row] === undefined) {
+            map[current_row] = "";
+        }
+
+        map[current_row] += symbol;
+
+        // move to the next row when this row is full
+        if (map[current_row].length === 5) {
+            current_row = current_row + 1;
+        }
+
+        return true;
+    };
+
+    return puzzle_tile;
 };
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -101,21 +136,21 @@ document.addEventListener('DOMContentLoaded', function () {
     step = upload.pdim; // each pixel unit
     bigstep = step * TILE_DIM; // each tile
 
-    console.log(step, bigstep);
-
     for (var y = 0; y < upload.img.height; y = y + bigstep) {
         for (var x = 0; x < upload.img.width; x = x + bigstep) {
             var p = new PuzzleTile();
             // read in the colour of the top-left pixel of every PIXEL_DIM square
             for (var j = 0; j < bigstep; j = j + step) {
                 for (var i = 0; i < bigstep; i = i + step) {
-                    var hex = image_data.readPixelDataHex(x + i, y + j);
+                    var hex = image_data.readPixelDataHex(x + i, y + j),
+                        symbol = p.addColor(hex);
+
+                    p.pushSymbol(symbol);
                     // make tile
                     // pixel_data = pixel_data.concat(image_data.readPixelData(x + i, y + j));
                 }
             }
 
-            console.log(hex);
             console.log(p.toString());
         }
     }
