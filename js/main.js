@@ -79,7 +79,7 @@ ImageContext = function ImageContext (src, w, h) {
 
 PuzzleTile = function PuzzleTile () {
     var puzzle_tile = {}, colors = {}, color_index = 0, map = [], current_row = 0,
-        cached_string;
+        cached_string, name;
 
     puzzle_tile.toString = function toString () {
 
@@ -89,6 +89,8 @@ PuzzleTile = function PuzzleTile () {
         ].join("\n"));
     };
 
+    // add a colour to the list and return the corresponding
+    // index (symbol), eg 0 for the first color 1 for the second etc
     puzzle_tile.addColor = function addColor (hex) {
         var symbol, color = "#" + hex;
 
@@ -119,8 +121,63 @@ PuzzleTile = function PuzzleTile () {
         return true;
     };
 
+    puzzle_tile.getName = function getName () {
+
+        return name || (name = [
+            Object.keys(colors).join(""),
+            map.join("")
+        ].join(""));
+    };
+
     return puzzle_tile;
-};
+},
+
+Legend = function Legend () {
+    // TODO I'm not sure where the printable characters start, but
+    var instance = {}, CHAR_OFFSET = 0;
+
+    // indexed by char with values of string
+    instance.legend = {};
+    instance.lookup = {}; // the lookup maps strings back to char
+    instance.length = 0;
+
+    // look up the tile in the legend, if it exists
+    // return the legend symbol, otherwise create it
+    instance.findOrCreate = function findOrCreate (tile_name) {
+        var symbol = instance.lookup[tile_name];
+
+        if (symbol !== undefined) {
+
+        } else {
+
+            symbol = instance.length + CHAR_OFFSET;
+                // add a symbol to the legend, with the next character
+            instance.legend[symbol] = tile_name;
+            instance.lookup[tile_name] = symbol;
+            instance.length = instance.length + 1;
+        }
+
+        return symbol;
+    };
+
+    // prints the legend
+    instance.toString = function toString () {
+        var lines = [], i, symbol;
+
+        for (i = 0; i < instance.length; i++) {
+            symbol = CHAR_OFFSET + i;
+            lines.push([symbol, "=", instance.legend[symbol]].join(" "));
+        }
+
+        return lines.join("\n");
+    };
+
+    return instance;
+},
+
+Objects = function Objects () {},
+Map = function Map () {},
+Layers = function Layers () {};
 
 document.addEventListener('DOMContentLoaded', function () {
     "use strict";
@@ -128,7 +185,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var upload = new ImageContext("assets/images/example.gif", 17, 13),
         image_data,canvas, ctx,
         TILE_DIM = 5, INTS_PER_CHUNK = 4,
-        tile_data_size, step, bigstep, pixel_data = [], pixel_image, pw, ph, clamped_array;
+        tile_data_size, step, bigstep, pixel_data = [], pixel_image, pw, ph, clamped_array,
+        tile_name, legend = new Legend();
 
     upload.drawImage();
     image_data = upload.getImageData();
@@ -136,25 +194,42 @@ document.addEventListener('DOMContentLoaded', function () {
     step = upload.pdim; // each pixel unit
     bigstep = step * TILE_DIM; // each tile
 
+    // for each tile in the image
     for (var y = 0; y < upload.img.height; y = y + bigstep) {
         for (var x = 0; x < upload.img.width; x = x + bigstep) {
             var p = new PuzzleTile();
+
             // read in the colour of the top-left pixel of every PIXEL_DIM square
             for (var j = 0; j < bigstep; j = j + step) {
                 for (var i = 0; i < bigstep; i = i + step) {
                     var hex = image_data.readPixelDataHex(x + i, y + j),
-                        symbol = p.addColor(hex);
+                        symbol = p.addColor(hex); // grab the ascii for this hex colour
 
-                    p.pushSymbol(symbol);
+                    p.pushSymbol(symbol); // add it to the tile
+
                     // make tile
                     // pixel_data = pixel_data.concat(image_data.readPixelData(x + i, y + j));
                 }
             }
 
-            console.log(p.toString());
+            tile_name = p.getName(); // TODO replace with a proper hash
+
+            // TODO this should be an instance
+            symbol = legend.findOrCreate(tile_name); // look up or generate the legend
+
+            console.log(tile_name, symbol);
+
+//          Map[x][y] = legend;
+
+//          // if a tile is new
+//          if (Objects[tile_name] === undefined) {
+//              Objects[tile_name] = p;
+//              Layers[0].push(tile_name);
+//          }
         }
     }
 
+    console.log(legend.toString());
 
     pw = upload.img.width/upload.pdim;
     ph = upload.img.height/upload.pdim;

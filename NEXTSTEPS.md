@@ -7,6 +7,7 @@ NEXTSTEPS
   - map: string (array of char)
   - data: Uint8ClampedArray
 
+- would like a hash function to hash up a tile by its colors and map (unique)
 
 currently the step is the width of a tile pixel,
 but now we will increase the outer step to 5 times that
