@@ -175,7 +175,21 @@ Legend = function Legend () {
     return instance;
 },
 
-Objects = function Objects () {},
+Objects = function Objects () {
+    var instance = {};
+
+    instance.toString = function toString () {
+        var tiles = [], keys = Object.keys(instance);
+
+        keys.forEach(function (key) {
+            tiles.push(instance[key].toString());
+        });
+
+        return tiles.join("\n");
+    };
+
+    return instance;
+},
 
 Levels = function Levels () {
     var instance = [];
@@ -203,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function () {
         image_data,canvas, ctx,
         TILE_DIM = 5, INTS_PER_CHUNK = 4,
         tile_data_size, step, bigstep, pixel_data = [], pixel_image, pw, ph, clamped_array,
-        tile_name, legend = new Legend(), tile_map = new Levels();
+        tile_name, legend = new Legend(), tile_map = new Levels(), objects = new Objects();
 
     upload.drawImage();
     image_data = upload.getImageData();
@@ -240,15 +254,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
             tile_map[y / bigstep][x / bigstep] = symbol;
 
-//          // if a tile is new
-//          if (Objects[tile_name] === undefined) {
-//              Objects[tile_name] = p;
-//              Layers[0].push(tile_name);
-//          }
+            // if a tile is new
+            if (objects[tile_name] === undefined) {
+                objects[tile_name] = p;
+                // Layers[0].push(tile_name);
+            }
         }
     }
 
+    console.log(objects.toString());
+    console.log(Object.keys(objects).length);
+    console.log(legend.toString());
+    console.log(legend.length);
     console.log(tile_map.toString());
+    console.log(tile_map.length);
 
     pw = upload.img.width/upload.pdim;
     ph = upload.img.height/upload.pdim;
