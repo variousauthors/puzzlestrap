@@ -84,6 +84,7 @@ PuzzleTile = function PuzzleTile () {
     puzzle_tile.toString = function toString () {
 
         return cached_string || (cached_string = [
+            name,
             Object.keys(colors).join(" "),
             map.join("\n")
         ].join("\n"));
@@ -172,6 +173,10 @@ Legend = function Legend () {
         return lines.join("\n");
     };
 
+    instance.headerString = function headerString () {
+        return "=======\nLEGEND\n=======";
+    };
+
     return instance;
 },
 
@@ -181,21 +186,30 @@ Objects = function Objects () {
     instance.objects = {};
     instance.length = 0;
 
+    // returns true if the given tile was added
     instance.add = function addObject (tile_name, tile) {
-        if (instance.objects[tile_name] === undefined) {
-            instance.objects[tile_name] = tile;
-            instance.length = instance.length + 1;
+        if (instance.objects[tile_name] !== undefined) {
+            return false;
         }
+
+        instance.objects[tile_name] = tile;
+        instance.length = instance.length + 1;
+
+        return true;
     };
 
     instance.toString = function toString () {
         var tiles = [], keys = Object.keys(instance.objects);
 
         keys.forEach(function (key) {
-            tiles.push(instance.objects[key].toString());
+            tiles.push(instance.objects[key].toString() + "\n");
         });
 
         return tiles.join("\n");
+    };
+
+    instance.headerString = function headerString () {
+        return "========\nOBJECTS\n========";
     };
 
     return instance;
@@ -215,10 +229,44 @@ Levels = function Levels () {
         return lines.join("\n");
     };
 
+    instance.headerString = function headerString () {
+        return "=======\nLEVELS\n=======";
+    };
+
     return instance;
 },
 
-Layers = function Layers () {};
+CollisionLayers = function CollisionLayers () {
+    var instance = {};
+
+    instance.layers = [];
+    instance.length = 0;
+
+    instance.newLayer = function newLayer () {
+        instance.layers[instance.length] = [];
+        instance.length = instance.length + 1;
+    };
+
+    instance.add = function add (tile_name) {
+        instance.layers[instance.length - 1].push(tile_name);
+    };
+
+    instance.toString = function toString () {
+        var lines = [], i;
+
+        for (i = 0; i < instance.layers.length; i++) {
+            lines.push(instance.layers[i].join(", "));
+        }
+
+        return lines.join("\n");
+    };
+
+    instance.headerString = function headerString () {
+        return "===============\nCOLLISIONLAYERS\n===============";
+    };
+
+    return instance;
+};
 
 document.addEventListener('DOMContentLoaded', function () {
     "use strict";
@@ -227,7 +275,10 @@ document.addEventListener('DOMContentLoaded', function () {
         image_data,canvas, ctx,
         TILE_DIM = 5, INTS_PER_CHUNK = 4,
         tile_data_size, step, bigstep, pixel_data = [], pixel_image, pw, ph, clamped_array,
-        tile_name, legend = new Legend(), tile_map = new Levels(), objects = new Objects();
+        tile_name,
+        legend = new Legend(), tile_map = new Levels(), objects = new Objects(), layers = new CollisionLayers();
+
+    layers.newLayer();
 
     upload.drawImage();
     image_data = upload.getImageData();
@@ -266,15 +317,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // if a tile is new
             if (objects.add(tile_name, p)) {
-                // Layers[0].push(tile_name);
+                layers.add(tile_name);
             }
         }
     }
 
+    console.log(objects.headerString());
     console.log(objects.toString());
     console.log(objects.length);
+    console.log(legend.headerString());
     console.log(legend.toString());
     console.log(legend.length);
+    console.log(layers.headerString());
+    console.log(layers.toString());
+    console.log(layers.length);
+    console.log(tile_map.headerString());
     console.log(tile_map.toString());
     console.log(tile_map.length);
 
