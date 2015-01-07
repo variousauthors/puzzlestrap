@@ -178,11 +178,21 @@ Legend = function Legend () {
 Objects = function Objects () {
     var instance = {};
 
+    instance.objects = {};
+    instance.length = 0;
+
+    instance.add = function addObject (tile_name, tile) {
+        if (instance.objects[tile_name] === undefined) {
+            instance.objects[tile_name] = tile;
+            instance.length = instance.length + 1;
+        }
+    };
+
     instance.toString = function toString () {
-        var tiles = [], keys = Object.keys(instance);
+        var tiles = [], keys = Object.keys(instance.objects);
 
         keys.forEach(function (key) {
-            tiles.push(instance[key].toString());
+            tiles.push(instance.objects[key].toString());
         });
 
         return tiles.join("\n");
@@ -255,15 +265,14 @@ document.addEventListener('DOMContentLoaded', function () {
             tile_map[y / bigstep][x / bigstep] = symbol;
 
             // if a tile is new
-            if (objects[tile_name] === undefined) {
-                objects[tile_name] = p;
+            if (objects.add(tile_name, p)) {
                 // Layers[0].push(tile_name);
             }
         }
     }
 
     console.log(objects.toString());
-    console.log(Object.keys(objects).length);
+    console.log(objects.length);
     console.log(legend.toString());
     console.log(legend.length);
     console.log(tile_map.toString());
