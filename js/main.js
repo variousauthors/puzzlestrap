@@ -176,7 +176,22 @@ Legend = function Legend () {
 },
 
 Objects = function Objects () {},
-Map = function Map () {},
+
+Levels = function Levels () {
+    var instance = [];
+
+    instance.toString = function toString () {
+        var lines = [], y;
+        for (y = 0; y < instance.length; y++) {
+            lines.push(instance[y].join(""));
+        }
+
+        return lines.join("\n");
+    };
+
+    return instance;
+},
+
 Layers = function Layers () {};
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -186,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
         image_data,canvas, ctx,
         TILE_DIM = 5, INTS_PER_CHUNK = 4,
         tile_data_size, step, bigstep, pixel_data = [], pixel_image, pw, ph, clamped_array,
-        tile_name, legend = new Legend();
+        tile_name, legend = new Legend(), tile_map = new Levels();
 
     upload.drawImage();
     image_data = upload.getImageData();
@@ -195,7 +210,11 @@ document.addEventListener('DOMContentLoaded', function () {
     bigstep = step * TILE_DIM; // each tile
 
     // for each tile in the image
+    // TODO the indices x and y should be subsequent integers, and then
+    // we should use multiplication to take them to pixel addresses
     for (var y = 0; y < upload.img.height; y = y + bigstep) {
+        tile_map[y / bigstep] = [];
+
         for (var x = 0; x < upload.img.width; x = x + bigstep) {
             var p = new PuzzleTile();
 
@@ -217,9 +236,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // TODO this should be an instance
             symbol = legend.findOrCreate(tile_name); // look up or generate the legend
 
-            console.log(tile_name, symbol);
-
-//          Map[x][y] = legend;
+            tile_map[y / bigstep][x / bigstep] = symbol;
 
 //          // if a tile is new
 //          if (Objects[tile_name] === undefined) {
@@ -229,7 +246,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    console.log(legend.toString());
+    console.log(tile_map.toString());
 
     pw = upload.img.width/upload.pdim;
     ph = upload.img.height/upload.pdim;
