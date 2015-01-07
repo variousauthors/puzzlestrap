@@ -134,7 +134,7 @@ PuzzleTile = function PuzzleTile () {
 
 Legend = function Legend () {
     // TODO I'm not sure where the printable characters start, but
-    var instance = {}, CHAR_OFFSET = 0;
+    var instance = {}, CHAR_OFFSET = 161;
 
     // indexed by char with values of string
     instance.legend = {};
@@ -166,7 +166,7 @@ Legend = function Legend () {
 
         for (i = 0; i < instance.length; i++) {
             symbol = CHAR_OFFSET + i;
-            lines.push([symbol, "=", instance.legend[symbol]].join(" "));
+            lines.push([String.fromCharCode(symbol), "=", instance.legend[symbol]].join(" "));
         }
 
         return lines.join("\n");
@@ -183,7 +183,9 @@ Levels = function Levels () {
     instance.toString = function toString () {
         var lines = [], y;
         for (y = 0; y < instance.length; y++) {
-            lines.push(instance[y].join(""));
+            // the array of char codes needs to be passed to fromcharcode as plain
+            // args, hence this nonsense
+            lines.push(String.fromCharCode.apply(String, instance[y]));
         }
 
         return lines.join("\n");
