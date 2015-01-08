@@ -85,7 +85,7 @@ PuzzleTile = function PuzzleTile () {
 
         return cached_string || (cached_string = [
             name,
-            Object.keys(colors).join(" "),
+            Object.keys(colors).map(function (c) { return "#" + c; }).join(" "),
             map.join("\n")
         ].join("\n"));
     };
@@ -93,7 +93,7 @@ PuzzleTile = function PuzzleTile () {
     // add a colour to the list and return the corresponding
     // index (symbol), eg 0 for the first color 1 for the second etc
     puzzle_tile.addColor = function addColor (hex) {
-        var symbol, color = "#" + hex;
+        var symbol, color = hex;
 
         if (colors[color] !== undefined) return colors[color];
 
@@ -322,18 +322,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    console.log(objects.headerString());
-    console.log(objects.toString());
-    console.log(objects.length);
-    console.log(legend.headerString());
-    console.log(legend.toString());
-    console.log(legend.length);
-    console.log(layers.headerString());
-    console.log(layers.toString());
-    console.log(layers.length);
-    console.log(tile_map.headerString());
-    console.log(tile_map.toString());
-    console.log(tile_map.length);
+    document.getElementById("puzzlescript").innerHTML = [
+        objects.headerString(),
+        objects.toString(),
+        legend.headerString(),
+        legend.toString(),
+        layers.headerString(),
+        layers.toString(),
+        tile_map.headerString(),
+        "<pre>" + tile_map.toString() + "</pre>"
+    ].join("<br><br>").replace(/\n/g, "<br>");
 
     pw = upload.img.width/upload.pdim;
     ph = upload.img.height/upload.pdim;
