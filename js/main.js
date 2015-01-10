@@ -180,6 +180,16 @@ Legend = function Legend () {
     return instance;
 },
 
+Prelude = function Prelude () {
+    var instance = {};
+
+    instance.toString = function toString () {
+        return "title Your Title Here\nauthor Your Name Here\nhomepage www.example.com";
+    };
+
+    return instance;
+},
+
 Objects = function Objects () {
     var instance = {};
 
@@ -204,6 +214,9 @@ Objects = function Objects () {
         keys.forEach(function (key) {
             tiles.push(instance.objects[key].toString() + "\n");
         });
+
+        tiles.push("Background\ntransparent\n");
+        tiles.push("Player\ntransparent\n");
 
         return tiles.join("\n");
     };
@@ -236,6 +249,36 @@ Levels = function Levels () {
     return instance;
 },
 
+Sounds = function Sounds () {
+    var instance = {};
+
+    instance.headerString = function headerString () {
+        return "=======\nSOUNDS\n=======";
+    };
+
+    return instance;
+};
+
+Rules = function Ruels () {
+    var instance = {};
+
+    instance.headerString = function headerString () {
+        return "======\nRULES\n======";
+    };
+
+    return instance;
+};
+
+WinConditions = function WinConditions () {
+    var instance = {};
+
+    instance.headerString = function headerString () {
+        return "==============\nWINCONDITIONS\n==============";
+    };
+
+    return instance;
+};
+
 CollisionLayers = function CollisionLayers () {
     var instance = {};
 
@@ -252,7 +295,7 @@ CollisionLayers = function CollisionLayers () {
     };
 
     instance.toString = function toString () {
-        var lines = [], i;
+        var lines = ["Background", "Player"], i;
 
         for (i = 0; i < instance.layers.length; i++) {
             lines.push(instance.layers[i].join(", "));
@@ -276,7 +319,8 @@ document.addEventListener('DOMContentLoaded', function () {
         TILE_DIM = 5, INTS_PER_CHUNK = 4,
         tile_data_size, step, bigstep, pixel_data = [], pixel_image, pw, ph, clamped_array,
         tile_name,
-        legend = new Legend(), tile_map = new Levels(), objects = new Objects(), layers = new CollisionLayers();
+        legend = new Legend(), tile_map = new Levels(), objects = new Objects(), layers = new CollisionLayers(),
+        rules = new Rules(), sounds = new Sounds(), win_conditions = new WinConditions(), prelude = new Prelude();
 
     layers.newLayer();
 
@@ -323,14 +367,18 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     document.getElementById("puzzlescript").innerHTML = [
+        prelude.toString(),
         objects.headerString(),
         objects.toString(),
         legend.headerString(),
         legend.toString(),
+        sounds.headerString(),
         layers.headerString(),
         layers.toString(),
+        rules.headerString(),
+        win_conditions.headerString(),
         tile_map.headerString(),
-        "<pre>" + tile_map.toString() + "</pre>"
+        tile_map.toString()
     ].join("<br><br>").replace(/\n/g, "<br>");
 
     pw = upload.img.width/upload.pdim;
