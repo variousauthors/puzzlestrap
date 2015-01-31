@@ -325,15 +325,23 @@ CollisionLayers = function CollisionLayers () {
 };
 
 PuzzleScript = function PuzzleScript () {
+    var legend = new Legend();
+    var levels = new Levels();
+    var objects = new Objects();
+    var layers = new CollisionLayers();
+    var rules = new Rules();
+    var sounds = new Sounds();
+    var win_conditions = new WinConditions();
+    var prelude = new Prelude();
     var instance = {
-        legend: new Legend(),
-        levels: new Levels(),
-        objects: new Objects(),
-        layers: new CollisionLayers(),
-        rules: new Rules(),
-        sounds: new Sounds(),
-        win_conditions: new WinConditions(),
-        prelude: new Prelude()
+        legend: legend,
+        levels: levels,
+        objects: objects,
+        layers: layers,
+        rules: rules,
+        sounds: sounds,
+        win_conditions: win_conditions,
+        prelude: prelude
     };
 
     instance.toString = function toString () {
@@ -353,6 +361,35 @@ PuzzleScript = function PuzzleScript () {
         ].join("<br><br>").replace(/\n/g, "<br>");
     };
 
+    instance.insertTile = function insertTile (tile) {
+        var generic_tile_name, symbol;
+        // TODO we may need to do all this inside the PuzzleScript object
+        // so that it can coordinate. The Objects list needs to know the name,
+        // because it determines the uniqueness
+        // the PS presumably can query what the current layer is
+        // the legend will need to know the related tile names in order
+        // to append the new name into the same symbol
+        // this will also be useful later when we implement renaming tiles
+        //
+        // this is the layer agnostic tile name the legend needs
+        generic_tile_name = tile.getName(); // TODO replace with a proper hash
+
+        // let the legend determine whether it has a tile that looks like this
+        if (legend.includes(tile)) {
+            // if the legend already includes a tile like this, then there
+            // is a collision, and we need to rename the tiles
+            symbol = legend.compose(tile, tile.setName(tile.getName(layers.current())));
+        } else {
+            symbol = legend.findOrCreate(generic_tile_name); // look up or generate the legend
+        }
+
+        // if a tile is new
+        if (objects.add(tile_name, tile)) {
+            layers.add(tile_name);
+        }
+
+        return symbol;
+    };
 
     return instance;
 };
@@ -397,6 +434,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // read in the colour of the top-left pixel of every PIXEL_DIM square
                 for (var j = 0; j < bigstep; j = j + step) {
                     for (var i = 0; i < bigstep; i = i + step) {
+                        // TODO we need to ignore transparent pixels
                         var hex = image_data.readPixelDataHex(x + i, y + j),
                             symbol = p.addColor(hex); // grab the ascii for this hex colour
 
@@ -404,17 +442,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
 
-                tile_name = p.getName(); // TODO replace with a proper hash
+                // TODO we need to do this ONLY if the tile is not transparent
+                symbol = puzzle_script.insertTile(p);
 
-                symbol = legend.findOrCreate(tile_name); // look up or generate the legend
-
-                // TODO here the level
+                // TODO we do need to do this, because any layer including the first could
+                // have transparent tiles (which we will not be recording)
                 levels[y / bigstep][x / bigstep] = symbol;
-
-                // if a tile is new
-                if (objects.add(tile_name, p)) {
-                    layers.add(tile_name);
-                }
             }
         }
     }(upload));
