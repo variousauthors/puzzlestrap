@@ -122,6 +122,16 @@ PuzzleTile = function PuzzleTile () {
         return true;
     };
 
+    // TODO we need to think about what to do when the user adds a new tile identical
+    // to an existing tile, on a new layer. The hash needs to be augmented, in that case.
+    // it may be enough to just add the layer index... but we would need to pass that in
+    // UGH it seems like we will need layer and tile to be entangled... unless layer is
+    // in charge of naming tiles! That way the relationship is unidirectional.
+    // When we add a tile to a layer, the layer names it. Before that, the name could
+    // just raise
+    //
+    // TODO also, we should start running this through an MD5 hash so that the names will
+    // all be the same length (purely asthetic)
     puzzle_tile.getName = function getName () {
 
         return name || (name = [
@@ -291,6 +301,9 @@ CollisionLayers = function CollisionLayers () {
     };
 
     instance.add = function add (tile_name) {
+        // if the user wants to add, they probably want a layer to add to
+        if (instance.length === 0) { throw new Error("You must call newLayer at least once before trying to add tiles to a layer." )}
+
         instance.layers[instance.length - 1].push(tile_name);
     };
 
@@ -311,83 +324,101 @@ CollisionLayers = function CollisionLayers () {
     return instance;
 };
 
+PuzzleScript = function PuzzleScript () {
+    var instance = {
+        legend: new Legend(),
+        levels: new Levels(),
+        objects: new Objects(),
+        layers: new CollisionLayers(),
+        rules: new Rules(),
+        sounds: new Sounds(),
+        win_conditions: new WinConditions(),
+        prelude: new Prelude()
+    };
+
+    instance.toString = function toString () {
+        return [
+            instance.prelude.toString(),
+            instance.objects.headerString(),
+            instance.objects.toString(),
+            instance.legend.headerString(),
+            instance.legend.toString(),
+            instance.sounds.headerString(),
+            instance.layers.headerString(),
+            instance.layers.toString(),
+            instance.rules.headerString(),
+            instance.win_conditions.headerString(),
+            instance.levels.headerString(),
+            instance.levels.toString()
+        ].join("<br><br>").replace(/\n/g, "<br>");
+    };
+
+
+    return instance;
+};
+
 document.addEventListener('DOMContentLoaded', function () {
     "use strict";
 
-    var upload = new ImageContext("assets/images/example.gif", 17, 13),
-        image_data,canvas, ctx,
-        TILE_DIM = 5, INTS_PER_CHUNK = 4,
-        tile_data_size, step, bigstep, pixel_data = [], pixel_image, pw, ph, clamped_array,
-        tile_name,
-        legend = new Legend(), tile_map = new Levels(), objects = new Objects(), layers = new CollisionLayers(),
-        rules = new Rules(), sounds = new Sounds(), win_conditions = new WinConditions(), prelude = new Prelude();
+    var TILE_DIM = 5, INTS_PER_CHUNK = 4;
+    var upload = new ImageContext("assets/images/example.gif", 17, 13);
+    var puzzle_script = new PuzzleScript();
+    var layers = puzzle_script.layers, levels = puzzle_script.levels, legend = puzzle_script.legend, objects = puzzle_script.objects;
 
-    layers.newLayer();
+    // TODO this should be PuzzleScript.layerFromImageContext(upload)
 
-    upload.drawImage();
-    image_data = upload.getImageData();
+    // TODO when adding a new layer, we need to revise the existing symbols, to include
+    // the elements that are above them
+    // in other words, that symbol in the legend needs to have an and added to it
+    //
+    // TODO we also need to ensure that the new tiles have unique names
 
-    step = upload.pdim; // each pixel unit
-    bigstep = step * TILE_DIM; // each tile
+    (function (upload) {
+        var image_data, step, bigstep;
 
-    // for each tile in the image
-    // TODO the indices x and y should be subsequent integers, and then
-    // we should use multiplication to take them to pixel addresses
-    for (var y = 0; y < upload.img.height; y = y + bigstep) {
-        tile_map[y / bigstep] = [];
+        // start a new layer
+        layers.newLayer();
 
-        for (var x = 0; x < upload.img.width; x = x + bigstep) {
-            var p = new PuzzleTile();
+        upload.drawImage();
+        image_data = upload.getImageData();
 
-            // read in the colour of the top-left pixel of every PIXEL_DIM square
-            for (var j = 0; j < bigstep; j = j + step) {
-                for (var i = 0; i < bigstep; i = i + step) {
-                    var hex = image_data.readPixelDataHex(x + i, y + j),
-                        symbol = p.addColor(hex); // grab the ascii for this hex colour
+        step = upload.pdim; // each pixel unit
+        bigstep = step * TILE_DIM; // each tile
 
-                    p.pushSymbol(symbol); // add it to the tile
+        // for each tile in the image
+        // TODO the indices x and y should be subsequent integers, and then
+        // we should use multiplication to take them to pixel addresses
+        for (var y = 0; y < upload.img.height; y = y + bigstep) {
+            levels[y / bigstep] = [];
 
-                    // make tile
-                    // pixel_data = pixel_data.concat(image_data.readPixelData(x + i, y + j));
+            for (var x = 0; x < upload.img.width; x = x + bigstep) {
+                var p = new PuzzleTile(), tile_name;
+
+                // read in the colour of the top-left pixel of every PIXEL_DIM square
+                for (var j = 0; j < bigstep; j = j + step) {
+                    for (var i = 0; i < bigstep; i = i + step) {
+                        var hex = image_data.readPixelDataHex(x + i, y + j),
+                            symbol = p.addColor(hex); // grab the ascii for this hex colour
+
+                        p.pushSymbol(symbol); // add it to the tile
+                    }
+                }
+
+                tile_name = p.getName(); // TODO replace with a proper hash
+
+                symbol = legend.findOrCreate(tile_name); // look up or generate the legend
+
+                // TODO here the level
+                levels[y / bigstep][x / bigstep] = symbol;
+
+                // if a tile is new
+                if (objects.add(tile_name, p)) {
+                    layers.add(tile_name);
                 }
             }
-
-            tile_name = p.getName(); // TODO replace with a proper hash
-
-            // TODO this should be an instance
-            symbol = legend.findOrCreate(tile_name); // look up or generate the legend
-
-            tile_map[y / bigstep][x / bigstep] = symbol;
-
-            // if a tile is new
-            if (objects.add(tile_name, p)) {
-                layers.add(tile_name);
-            }
         }
-    }
+    }(upload));
 
-    document.getElementById("puzzlescript").innerHTML = [
-        prelude.toString(),
-        objects.headerString(),
-        objects.toString(),
-        legend.headerString(),
-        legend.toString(),
-        sounds.headerString(),
-        layers.headerString(),
-        layers.toString(),
-        rules.headerString(),
-        win_conditions.headerString(),
-        tile_map.headerString(),
-        tile_map.toString()
-    ].join("<br><br>").replace(/\n/g, "<br>");
-
-    pw = upload.img.width/upload.pdim;
-    ph = upload.img.height/upload.pdim;
-
-    clamped_array = new Uint8ClampedArray(pixel_data, pw, ph);
-    pixel_image = new ImageData(clamped_array, pw, ph);
-
-    canvas = document.getElementById("canvas");
-    ctx = canvas.getContext("2d");
-    ctx.putImageData(pixel_image, upload.img.width, upload.img.height);
+    // TODO this should use PuzzleScript.toString()
+    document.getElementById("puzzlescript").innerHTML = puzzle_script.toString();
 });
