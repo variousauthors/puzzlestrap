@@ -133,8 +133,14 @@ PuzzleTile = function PuzzleTile () {
     // TODO also, we should start running this through an MD5 hash so that the names will
     // all be the same length (purely asthetic)
     puzzle_tile.getName = function getName () {
+        if (name === undefined) { throw "getName would return 'undefined' because the tile is not yet named."}
 
-        return name || (name = [
+        return name;
+    };
+
+    puzzle_tile.setName = function setName (layer) {
+        return (name = [
+            layer,
             Object.keys(colors).join(""),
             map.join("")
         ].join(""));
@@ -154,10 +160,11 @@ Legend = function Legend () {
 
     // look up the tile in the legend, if it exists
     // return the legend symbol, otherwise create it
-    instance.findOrCreate = function findOrCreate (tile_name) {
+    instance.create = function create (tile_name) {
         var symbol = instance.lookup[tile_name];
 
         if (symbol !== undefined) {
+            // NOP
 
         } else {
 
@@ -207,6 +214,7 @@ Objects = function Objects () {
     instance.length = 0;
 
     // returns true if the given tile was added
+    // TODO this validation is essentially redundant now that layers is in charge of uniqueness
     instance.add = function addObject (tile_name, tile) {
         if (instance.objects[tile_name] !== undefined) {
             return false;
@@ -296,22 +304,41 @@ CollisionLayers = function CollisionLayers () {
     instance.length = 0;
 
     instance.newLayer = function newLayer () {
-        instance.layers[instance.length] = [];
+        instance.layers[instance.length] = {};
         instance.length = instance.length + 1;
     };
 
-    instance.add = function add (tile_name) {
+    instance.add = function add (tile) {
+        var tile_name, layer, unique = false;
+
         // if the user wants to add, they probably want a layer to add to
         if (instance.length === 0) { throw new Error("You must call newLayer at least once before trying to add tiles to a layer." )}
 
-        instance.layers[instance.length - 1].push(tile_name);
+        tile_name = tile.setName({ layer: instance.length });
+        layer = instance.layers[instance.length - 1]
+
+        // validate uniqueness of the tile for this layer
+        if (layer[tile_name] === undefined) {
+            layer[tile_name] = true;
+            unique = true;
+
+        }
+
+        return unique;
+    };
+
+    // TODO determine uniqueness of tile on the given layer
+    instance.hasTile = function hasTile (layer, tile) {
+        return true;
     };
 
     instance.toString = function toString () {
         var lines = ["Background", "Player"], i;
 
         for (i = 0; i < instance.layers.length; i++) {
-            lines.push(instance.layers[i].join(", "));
+            var tile_names = Object.keys(instance.layers[i]);
+
+            lines.push(tile_names.join(", "));
         }
 
         return lines.join("\n");
@@ -362,33 +389,19 @@ PuzzleScript = function PuzzleScript () {
     };
 
     instance.insertTile = function insertTile (tile) {
+        // the collision layers will determine uniqueness
+        // pass the tile to the layers, it names the tile and
+        // checks uniqueness. If it is a new tile, the tile
+        // is added to the layer and insert into layer returns true
+        // otherwise it returns false
+        // if the tile is new, then we can add it to:
+        // Objects, Legend (TODO presumably appending)
         var generic_tile_name, symbol;
-        // TODO we may need to do all this inside the PuzzleScript object
-        // so that it can coordinate. The Objects list needs to know the name,
-        // because it determines the uniqueness
-        // the PS presumably can query what the current layer is
-        // the legend will need to know the related tile names in order
-        // to append the new name into the same symbol
-        // this will also be useful later when we implement renaming tiles
-        //
-        // this is the layer agnostic tile name the legend needs
-        generic_tile_name = tile.getName(); // TODO replace with a proper hash
 
-        // let the legend determine whether it has a tile that looks like this
-        if (legend.includes(tile)) {
-            // if the legend already includes a tile like this, then there
-            // is a collision, and we need to rename the tiles
-            symbol = legend.compose(tile, tile.setName(tile.getName(layers.current())));
-        } else {
-            symbol = legend.findOrCreate(generic_tile_name); // look up or generate the legend
+        if (layers.add(tile) === true) {
+            // the tile is unique to this layer, so it is a new tile
+            objects.add(tile);
         }
-
-        // if a tile is new
-        if (objects.add(tile_name, tile)) {
-            layers.add(tile_name);
-        }
-
-        return symbol;
     };
 
     return instance;
@@ -443,11 +456,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 // TODO we need to do this ONLY if the tile is not transparent
-                symbol = puzzle_script.insertTile(p);
+                tile_name = puzzle_script.insertTile(p);
 
-                // TODO we do need to do this, because any layer including the first could
-                // have transparent tiles (which we will not be recording)
-                levels[y / bigstep][x / bigstep] = symbol;
+                // TODO this could be pulled into the levels object as a function of x, y, tile
+                symbol = levels[y / bigstep][x / bigstep];
+
+                if (symbol === undefined) {
+                    // create a new symbol for this map cell
+                    levels[y / bigstep][x / bigstep] = legend.create(tile_name);
+
+                } else {
+                    // there is already a symbol at this map position, so add the tile to it
+                    legend.compose(symbol, tile_name);
+                }
             }
         }
     }(upload));
