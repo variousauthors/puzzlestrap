@@ -154,28 +154,70 @@ Legend = function Legend () {
     var instance = {}, CHAR_OFFSET = 161;
 
     // indexed by char with values of string
-    instance.legend = {};
-    instance.lookup = {}; // the lookup maps strings back to char
+    instance.legend = {};// strings or arrays of strings indexed by symbols
+    instance.atoms = {}; // maps tile_names to symbols where we have exactly s = tile_name
     instance.length = 0;
 
-    // look up the tile in the legend, if it exists
-    // return the legend symbol, otherwise create it
-    instance.create = function create (tile_name) {
-        var symbol = instance.lookup[tile_name];
+    // returns the array of tile names for this symbol
+    instance.getTileNames = function find (symbol) {
+        var names = instance.legend[symbol];
 
-        if (symbol !== undefined) {
-            // NOP
-
-        } else {
-
-            symbol = instance.length + CHAR_OFFSET;
-                // add a symbol to the legend, with the next character
-            instance.legend[symbol] = tile_name;
-            instance.lookup[tile_name] = symbol;
-            instance.length = instance.length + 1;
+        if (typeof names === "string") {
+            names = [names];
         }
 
+        return names;
+    };
+
+    // returns the symbol that corresponds to ONLY the tile_name
+    instance.findAtom = function findAtom (tile_name) {
+        var symbol = instance.atoms[tile_name];
+
+        return symbol || null
+    };
+
+    instance.findOrCreate = function findOrCreate (tile_name) {
+        var symbol = instance.findAtom(tile_name);
+
+        if (symbol === null) return instance.create(tile_name);
+
         return symbol;
+    };
+
+    // creates a new atom (a simple symbol, tile_name pair)
+    instance.create = function create (tile_name) {
+        var symbol = instance.findAtom(tile_name);
+
+        if (symbol !== null) { throw "Tried to create a new symbol that would be the same as an old symbol. Try 'findAtom(tile_name).'"; }
+
+        // choose a new symbol
+        symbol = instance.length + CHAR_OFFSET;
+
+            // add a symbol to the legend, with the next character
+        instance.legend[symbol] = tile_name;
+        instance.atoms[tile_name] = symbol;
+        instance.length = instance.length + 1;
+
+        return symbol;
+    };
+
+    // a legend symbol is an atom if it represents exactly one tile
+    instance.isAtom = function isAtom (symbol) {
+        return instance.legend[symbol].length === 1;
+    };
+
+    // adds the tile_name to the symbol, so we get `s = some_name and tile_name`
+    instance.compose = function compose (tile_name, symbol) {
+
+        if (instance.isAtom(symbol) === true) {
+            // initialize the composition
+            instance.legend[symbol] = [instance.legend[symbol], tile_name];
+
+            // enforce that the symbol is no longer an atom
+            delete instance.atoms[instance.legend[symbol]];
+        }
+
+        instance.legend[symbol].push(tile_name);
     };
 
     // prints the legend
@@ -314,7 +356,7 @@ CollisionLayers = function CollisionLayers () {
         // if the user wants to add, they probably want a layer to add to
         if (instance.length === 0) { throw new Error("You must call newLayer at least once before trying to add tiles to a layer." )}
 
-        tile_name = tile.setName({ layer: instance.length });
+        tile_name = tile.setName(instance.length);
         layer = instance.layers[instance.length - 1]
 
         // validate uniqueness of the tile for this layer
@@ -396,12 +438,14 @@ PuzzleScript = function PuzzleScript () {
         // otherwise it returns false
         // if the tile is new, then we can add it to:
         // Objects, Legend (TODO presumably appending)
-        var generic_tile_name, symbol;
+        var unique = layers.add(tile);
 
-        if (layers.add(tile) === true) {
+        if (unique === true) {
             // the tile is unique to this layer, so it is a new tile
-            objects.add(tile);
+            objects.add(tile.getName(), tile);
         }
+
+        return unique;
     };
 
     return instance;
@@ -442,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function () {
             levels[y / bigstep] = [];
 
             for (var x = 0; x < upload.img.width; x = x + bigstep) {
-                var p = new PuzzleTile(), tile_name;
+                var p = new PuzzleTile(), tile_name, tile_names;
 
                 // read in the colour of the top-left pixel of every PIXEL_DIM square
                 for (var j = 0; j < bigstep; j = j + step) {
@@ -456,18 +500,42 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 // TODO we need to do this ONLY if the tile is not transparent
-                tile_name = puzzle_script.insertTile(p);
+                puzzle_script.insertTile(p);
 
                 // TODO this could be pulled into the levels object as a function of x, y, tile
                 symbol = levels[y / bigstep][x / bigstep];
 
-                if (symbol === undefined) {
-                    // create a new symbol for this map cell
-                    levels[y / bigstep][x / bigstep] = legend.create(tile_name);
+                tile_name = p.getName();
 
+                // we want to look at the map cells
+                // if the map cell is empty, we want to look up this tile_name in the legend
+                //   find or create, but only find symbols that have JUST this tile_name (should be unique)
+                // and add that symbol to the map
+                // if the map cell has contents,
+                //   we want to look up that symbol
+                //   if that symbol already accounts for this tile_name move on
+                //   otherwise, add this tile_name to the symbol
+
+                if (symbol === undefined) {
+                    // the cell is empty
+                    // find or create a symbol in the legend
+                    // assign that symbol to this spot
+
+                    levels[y / bigstep][x / bigstep] = legend.findOrCreate(tile_name);
                 } else {
-                    // there is already a symbol at this map position, so add the tile to it
-                    legend.compose(symbol, tile_name);
+                    // the cell has a symbol
+                    // look up that symbol in the legend
+                    tile_names = legend.getTileNames(symbol);
+
+                    if (tile_names.indexOf(tile_name) > 0) {
+                        // if that symbol already has this tile_name, do nothing
+
+                    } else {
+                        // otherwise, compose the tile_name into the legend
+                        console.log("woops!"); // this shouldn't be happening yet
+
+                        legend.compose(tile_name, symbol);
+                    }
                 }
             }
         }
