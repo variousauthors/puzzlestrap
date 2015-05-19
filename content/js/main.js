@@ -311,7 +311,7 @@ CollisionLayers = function CollisionLayers () {
     return instance;
 };
 
-document.addEventListener('DOMContentLoaded', function () {
+document.getElementById('files').addEventListener('change', function (a, b, c) {
     "use strict";
 
     var upload = new ImageContext("assets/images/example.gif", 17, 13),
@@ -390,4 +390,4 @@ document.addEventListener('DOMContentLoaded', function () {
     canvas = document.getElementById("canvas");
     ctx = canvas.getContext("2d");
     ctx.putImageData(pixel_image, upload.img.width, upload.img.height);
-});
+}, false);
