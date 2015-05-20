@@ -311,16 +311,17 @@ CollisionLayers = function CollisionLayers () {
     return instance;
 };
 
-document.getElementById('files').addEventListener('change', function (a, b, c) {
+Main = function (src) {
     "use strict";
 
-    var upload = new ImageContext("assets/images/example.gif", 17, 13),
-        image_data,canvas, ctx,
-        TILE_DIM = 5, INTS_PER_CHUNK = 4,
-        tile_data_size, step, bigstep, pixel_data = [], pixel_image, pw, ph, clamped_array,
-        tile_name,
-        legend = new Legend(), tile_map = new Levels(), objects = new Objects(), layers = new CollisionLayers(),
-        rules = new Rules(), sounds = new Sounds(), win_conditions = new WinConditions(), prelude = new Prelude();
+    console.log(src);
+    var upload = new ImageContext(src, 17, 13);
+    var image_data,canvas, ctx;
+    var TILE_DIM = 5, INTS_PER_CHUNK = 4;
+    var tile_data_size, step, bigstep, pixel_data = [], pixel_image, pw, ph, clamped_array;
+    var tile_name;
+    var legend = new Legend(), tile_map = new Levels(), objects = new Objects(), layers = new CollisionLayers();
+    var rules = new Rules(), sounds = new Sounds(), win_conditions = new WinConditions(), prelude = new Prelude();
 
     layers.newLayer();
 
@@ -390,4 +391,4 @@ document.getElementById('files').addEventListener('change', function (a, b, c) {
     canvas = document.getElementById("canvas");
     ctx = canvas.getContext("2d");
     ctx.putImageData(pixel_image, upload.img.width, upload.img.height);
-}, false);
+};
