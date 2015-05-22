@@ -7,11 +7,11 @@
     %meta{:charset => "utf-8"}
       %title
         Junior Game Developer -- Ziggy!
-        %link{:href => @items['/css/stylesheet/'].path, :rel => "stylesheet"}
-        %link{:href => "/favicon.ico", :rel => "icon", :type => "image/x-icon"}
-        %link{:href => "//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css", :rel => "stylesheet"}
-        / you don't need to keep this, but it's cool for stats!
-        %meta{:content => "nanoc #{Nanoc::VERSION}", :name => "generator"}
+      %link{:href => @items['/css/stylesheet/'].path, :rel => "stylesheet"}
+      %link{:href => "/favicon.ico", :rel => "icon", :type => "image/x-icon"}
+      %link{:href => "//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css", :rel => "stylesheet"}
+      / you don't need to keep this, but it's cool for stats!
+      %meta{:content => "nanoc #{Nanoc::VERSION}", :name => "generator"}
   %body
     #container
       = yield

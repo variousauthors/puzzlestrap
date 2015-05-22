@@ -1,7 +1,24 @@
 ---
 ---
 
-%input#files{ type: "file", name: "files[]", multiple: true }
+.layers
+  %ul#layer-select
+    %li#background.tab.active
+      Background
+    %li#create-layer.tab
+      +
+  #current-layer
+    .preview
+    .name <!-- input for layer name -->
+
+    %input#files{ type: "file", name: "files[]", multiple: true }
+
+.tiles
+
 %canvas#canvas{ width: 400, height: 300 }
 
 %pre#puzzlescript{ style: "border: 1px solid red;" }
+
+%script#layer-template{ type: "text/template" }
+  %li.tab
+    New Tab

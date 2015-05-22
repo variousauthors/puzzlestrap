@@ -1,0 +1,35 @@
+@import '_custom.css.scss';
+
+#layer-select {
+    @extend .hard;
+    @extend .no-push;
+
+    .tab {
+        @extend .inline-block;
+
+        border: 1px solid;
+        border-radius: 0 5px 0 0;
+        border-bottom: none;
+        min-width: 50px;
+        padding: 2px;
+        padding-right: 10px;
+        text-align: right;
+        cursor: pointer;
+
+        &:not(.active):not(#create-layer) {
+            opacity: 0.5;
+        }
+    }
+}
+
+#current-layer {
+    border: 1px solid;
+
+    .preview {
+        width: 500px;
+        height: 300px;
+        border: 1px solid;
+        margin: 10px;
+
+    }
+}
