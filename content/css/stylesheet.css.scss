@@ -55,8 +55,14 @@
 
 }
 
-#puzzlescript {
+#working-draft {
+    @extend .push-top;
     @extend .soft;
+    border: 1px solid red;
 
-    overflow-x: scroll;
+    #puzzlescript {
+        @extend .push;
+
+        overflow-x: scroll;
+    }
 }

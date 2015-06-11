@@ -400,6 +400,7 @@ function Puzzlescript () {
                 var symbol;
 
                 // read in the colour of the top-left pixel of every PIXEL_DIM square
+                // TODO if the tile is alpha we should skip it?
                 for (var j = 0; j < bigstep; j = j + step) {
                     for (var i = 0; i < bigstep; i = i + step) {
                         var hex = image_data.readPixelDataHex(x + i, y + j);

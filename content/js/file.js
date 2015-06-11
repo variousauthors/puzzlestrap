@@ -7,6 +7,18 @@ function layerId () {
     return id;
 }
 
+function selectText(container_id) {
+    if (document.selection) {
+        var range = document.body.createTextRange();
+        range.moveToElementText(document.getElementById(container_id));
+        range.select();
+    } else if (window.getSelection) {
+        var range = document.createRange();
+        range.selectNode(document.getElementById(container_id));
+        window.getSelection().addRange(range);
+    }
+}
+
 function toggleActive (context, element) {
     var current = context.getElementsByClassName("active"), i;
 
@@ -91,4 +103,8 @@ document.getElementById('layer-select').addEventListener('click', function (e) {
     }
 
     return true;
+});
+
+document.getElementById('select-script').addEventListener('click', function (e) {
+    selectText(e.target.dataset.target);
 });
