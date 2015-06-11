@@ -72,6 +72,7 @@ document.getElementById('files').addEventListener('change', function (e) {
         var canvas = layer.getElementsByTagName('canvas')[0];
 
         puzzlescript.addLayerFromImage(e.target.result, canvas);
+        puzzlescript.layers.draw();
         document.getElementById("puzzlescript").innerHTML = puzzlescript.toString();
     };
 

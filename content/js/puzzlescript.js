@@ -291,15 +291,18 @@ CollisionLayers = function CollisionLayers () {
     var instance = {};
 
     instance.layers = [];
+    instance.images = [];
     instance.length = 0;
 
-    instance.newLayer = function newLayer () {
+    instance.newLayer = function newLayer (imageContext) {
         instance.layers[instance.length] = [];
+        instance.images[instance.length] = imageContext;
         instance.length = instance.length + 1;
     };
 
-    instance.add = function add (tile_name) {
-        instance.layers[instance.length - 1].push(tile_name);
+    instance.add = function add (tile_name, layer_index) {
+        layer_index = (layer_index == undefined) ? instance.length -1 : layer_index;
+        instance.layers[layer_index].push(tile_name);
     };
 
     instance.toString = function toString () {
@@ -310,6 +313,11 @@ CollisionLayers = function CollisionLayers () {
         }
 
         return lines.join("\n");
+    };
+
+    instance.draw = function draw (layer_index) {
+        layer_index = (layer_index == undefined) ? (instance.length - 1) : layer_index;
+        instance.images[layer_index].drawImage();
     };
 
     instance.headerString = function headerString () {
@@ -355,12 +363,9 @@ function Puzzlescript () {
         var TILE_DIM = 5, INTS_PER_CHUNK = 4;
         var tile_data_size, step, bigstep, pixel_data = [], pixel_image, pw, ph, clamped_array;
         var tile_name;
-        var legend = new Legend(), tile_map = new Levels(), objects = new Objects(), layers = new CollisionLayers();
-        var rules = new Rules(), sounds = new Sounds(), win_conditions = new WinConditions(), prelude = new Prelude();
 
-        layers.newLayer();
+        instance.layers.newLayer(upload);
 
-        upload.drawImage();
         image_data = upload.getImageData();
 
         step = upload.pdim; // each pixel unit
@@ -370,7 +375,7 @@ function Puzzlescript () {
         // TODO the indices x and y should be subsequent integers, and then
         // we should use multiplication to take them to pixel addresses
         for (var y = 0; y < upload.img.height; y = y + bigstep) {
-            tile_map[y / bigstep] = [];
+            instance.levels[y / bigstep] = [];
 
             for (var x = 0; x < upload.img.width; x = x + bigstep) {
                 var p = new PuzzleTile();
@@ -391,13 +396,13 @@ function Puzzlescript () {
                 tile_name = p.getName(); // TODO replace with a proper hash
 
                 // TODO this should be an instance
-                symbol = legend.findOrCreate(tile_name); // look up or generate the legend
+                symbol = instance.legend.findOrCreate(tile_name); // look up or generate the legend
 
-                tile_map[y / bigstep][x / bigstep] = symbol;
+                instance.levels[y / bigstep][x / bigstep] = symbol;
 
                 // if a tile is new
-                if (objects.add(tile_name, p)) {
-                    layers.add(tile_name);
+                if (instance.objects.add(tile_name, p)) {
+                    instance.layers.add(tile_name);
                 }
             }
         }
