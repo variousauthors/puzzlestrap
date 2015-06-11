@@ -3,15 +3,17 @@
 
 .layers
   %ul#layer-select
-    %li#background.tab.active
+    %li#background.tab.active{ data: { "layer-name" => "layer-background" } }
       Background
     %li#create-layer.tab
       +
-  #current-layer
-    .preview
-    .name <!-- input for layer name -->
+  %ul#layers
+    %li.active{ data: { "layer-name" => "layer-background" } }
+      .preview
+      .name
+        Background
 
-    %input#files{ type: "file", name: "files[]", multiple: true }
+      %input#files{ type: "file", name: "files[]", multiple: true }
 
 .tiles
 
@@ -20,5 +22,15 @@
 %pre#puzzlescript{ style: "border: 1px solid red;" }
 
 %script#layer-template{ type: "text/template" }
+  %li
+    .preview
+    .name
+      NEW LAYER
+
+    %input#files{ type: "file", name: "files[]", multiple: true }
+
+%script#layer-tab-template{ type: "text/template" }
   %li.tab
     New Tab
+
+

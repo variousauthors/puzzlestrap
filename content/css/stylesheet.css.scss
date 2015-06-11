@@ -22,14 +22,30 @@
     }
 }
 
-#current-layer {
-    border: 1px solid;
+#layers {
+    @extend .hard;
+    @extend .no-push;
 
-    .preview {
-        width: 500px;
-        height: 300px;
-        border: 1px solid;
-        margin: 10px;
+    li {
+        display: none;
+
+        &.active {
+            @extend .soft-left;
+            @extend .soft-bottom;
+
+            display: block;
+            border: 1px solid;
+
+            .preview {
+                @extend .push-extrema;
+
+                width: 500px;
+                height: 300px;
+                border: 1px solid;
+            }
+        }
 
     }
+
 }
+
