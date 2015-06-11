@@ -10,6 +10,7 @@
   %ul#layers
     %li.active{ data: { "layer-name" => "layer-background" } }
       .preview
+        %canvas{ width: 400, height: 300 }
       .name
         Background
 
@@ -17,13 +18,13 @@
 
 .tiles
 
-%canvas#canvas{ width: 400, height: 300 }
 
 %pre#puzzlescript{ style: "border: 1px solid red;" }
 
 %script#layer-template{ type: "text/template" }
   %li
     .preview
+      %canvas{ width: 400, height: 300 }
     .name
       NEW LAYER
 

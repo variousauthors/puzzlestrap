@@ -45,6 +45,8 @@ function createLayer (create_layer_tab) {
 
     toggleActive(tabs, new_layer_tab);
     toggleActive(layers, new_layer);
+
+    return new_layer;
 }
 
 function switchLayer (target_layer_tab) {
@@ -66,7 +68,8 @@ document.getElementById('files').addEventListener('change', function (e) {
     reader = new FileReader();
 
     reader.onload = function (e) {
-        Main(e.target.result);
+        var canvas = document.getElementById('layers').getElementsByClassName('active')[0].getElementsByTagName('canvas')[0];
+        puzzlescript.addLayerFromImage(e.target.result, canvas);
     };
 
     reader.readAsDataURL(file);
@@ -74,6 +77,7 @@ document.getElementById('files').addEventListener('change', function (e) {
 
 document.getElementById('layer-select').addEventListener('click', function (e) {
     var target = e.target;
+    var canvas;
 
     if (target && target.id === "create-layer") {
         return createLayer(target);
