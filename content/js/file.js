@@ -68,8 +68,11 @@ document.getElementById('files').addEventListener('change', function (e) {
     reader = new FileReader();
 
     reader.onload = function (e) {
-        var canvas = document.getElementById('layers').getElementsByClassName('active')[0].getElementsByTagName('canvas')[0];
+        var layer = document.getElementById('layers').getElementsByClassName('active')[0];
+        var canvas = layer.getElementsByTagName('canvas')[0];
+
         puzzlescript.addLayerFromImage(e.target.result, canvas);
+        document.getElementById("puzzlescript").innerHTML = puzzlescript.toString();
     };
 
     reader.readAsDataURL(file);

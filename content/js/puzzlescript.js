@@ -331,6 +331,24 @@ function Puzzlescript () {
     instance.win_conditions = new WinConditions();
     instance.prelude = new Prelude();
 
+    instance.toString = function toString () {
+        return [
+            instance.prelude.toString(),
+            instance.objects.headerString(),
+            instance.objects.toString(),
+            instance.legend.headerString(),
+            instance.legend.toString(),
+            instance.sounds.headerString(),
+            instance.layers.headerString(),
+            instance.layers.toString(),
+            instance.rules.headerString(),
+            instance.win_conditions.headerString(),
+            instance.levels.headerString(),
+            instance.levels.toString()
+        ].join("<br><br>").replace(/\n/g, "<br>");
+
+    }
+
     instance.addLayerFromImage = function addLayerFromImage (src, canvas, name) {
         var upload = new ImageContext(src, canvas, 17, 13);
         var image_data, ctx;
@@ -383,31 +401,6 @@ function Puzzlescript () {
                 }
             }
         }
-
-        document.getElementById("puzzlescript").innerHTML = [
-            prelude.toString(),
-            objects.headerString(),
-            objects.toString(),
-            legend.headerString(),
-            legend.toString(),
-            sounds.headerString(),
-            layers.headerString(),
-            layers.toString(),
-            rules.headerString(),
-            win_conditions.headerString(),
-            tile_map.headerString(),
-            tile_map.toString()
-        ].join("<br><br>").replace(/\n/g, "<br>");
-
-        pw = upload.img.width/upload.pdim;
-        ph = upload.img.height/upload.pdim;
-
-        clamped_array = new Uint8ClampedArray(pixel_data, pw, ph);
-        pixel_image = new ImageData(clamped_array, pw, ph);
-
-        canvas = document.getElementById("canvas");
-        ctx = canvas.getContext("2d");
-        ctx.putImageData(pixel_image, upload.img.width, upload.img.height);
 
     }
 

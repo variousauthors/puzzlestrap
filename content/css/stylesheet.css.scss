@@ -36,12 +36,18 @@
             display: block;
             border: 1px solid;
 
-            .preview {
-                @extend .push-extrema;
+            .vitals {
+                width: 40%;
+                display: inline-block;
+                vertical-align: top;
 
-                width: 500px;
-                height: 300px;
-                border: 1px solid;
+                .preview {
+                    @extend .push-extrema;
+
+                    width: 500px;
+                    height: 300px;
+                    border: 1px solid;
+                }
             }
         }
 
@@ -49,3 +55,6 @@
 
 }
 
+#puzzlescript {
+    @extend .soft;
+}

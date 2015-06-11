@@ -9,12 +9,14 @@
       +
   %ul#layers
     %li.active{ data: { "layer-name" => "layer-background" } }
-      .preview
-        %canvas{ width: 400, height: 300 }
-      .name
-        Background
+      .vitals
+        .preview
+          %canvas{ width: 400, height: 300 }
+        .name
+          Background
 
-      %input#files{ type: "file", name: "files[]", multiple: true }
+        %input#files{ type: "file", name: "files[]", multiple: true }
+      .script
 
 .tiles
 
@@ -23,12 +25,14 @@
 
 %script#layer-template{ type: "text/template" }
   %li
-    .preview
-      %canvas{ width: 400, height: 300 }
-    .name
-      NEW LAYER
+    .vitals
+      .preview
+        %canvas{ width: 400, height: 300 }
+      .name
+        Background
 
-    %input#files{ type: "file", name: "files[]", multiple: true }
+      %input#files{ type: "file", name: "files[]", multiple: true }
+    .script
 
 %script#layer-tab-template{ type: "text/template" }
   %li.tab

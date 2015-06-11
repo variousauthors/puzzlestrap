@@ -92,6 +92,10 @@ $screen-md-min: 10px;
     border-radius: $small-circle-radius;
 }
 
+.soft {
+    padding: $line-height-computed;
+}
+
 .soft-sides {
     padding-left: $line-height-computed;
     padding-right: $line-height-computed;
