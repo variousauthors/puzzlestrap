@@ -59,7 +59,7 @@ function switchLayer (target_layer_tab) {
     toggleActive(layers, target_layer);
 }
 
-document.getElementById('files').addEventListener('change', function (e) {
+document.getElementById('layers').addEventListener('change', function (e) {
     var file = e.target.files[0];
     var reader;
 
@@ -72,7 +72,6 @@ document.getElementById('files').addEventListener('change', function (e) {
         var canvas = layer.getElementsByTagName('canvas')[0];
 
         puzzlescript.addLayerFromImage(e.target.result, canvas);
-        puzzlescript.layers.draw();
         document.getElementById("puzzlescript").innerHTML = puzzlescript.toString();
     };
 

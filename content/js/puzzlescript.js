@@ -10,6 +10,7 @@ function getUUID () {
 var AugmentedImageData = function AugmentedImageData (ctx, x, y, w, h) {
     var dataObject, CHUNK_SIZE = 4;
 
+    console.log(x, y, w, h);
     dataObject = ctx.getImageData(x, y, w, h);
 
     dataObject.readPixelDataHex = function readPixelDataHex (x, y) {
@@ -81,6 +82,9 @@ ImageContext = function ImageContext (src, canvas, w, h) {
     upload.drawImage = function drawImage () {
         return ctx.drawImage(img, 0, 0);
     };
+
+    // draw the image in order to have something to study
+    upload.drawImage();
 
     return upload;
 },
@@ -168,6 +172,20 @@ Legend = function Legend () {
 
         return symbol;
     };
+
+    // replace an existing legend entry with a composite
+    // so,
+    // T = some_tile
+    // becomes,
+    // T = some_tile and other_tile
+    // we aren't going to check for layer collisions because currently
+    // we only allow layers to be added all at once
+    instance.composeTile = function composeTile (symbol, tile_name) {
+        if (instance.legend[symbol] == undefined) { throw new Error("Tried to compose a symbol when the original was undefined."); }
+        if (instance.legend[symbol].indexOf(tile_name) > 0) { return; }
+
+        instance.legend[symbol] = instance.legend[symbol] + " and " + tile_name;
+    }
 
     // prints the legend
     instance.toString = function toString () {
@@ -331,7 +349,7 @@ function Puzzlescript () {
     var instance = {};
 
     instance.legend = new Legend();
-    instance.levels = new Levels();
+    instance.tile_map = new Levels();
     instance.objects = new Objects();
     instance.layers = new CollisionLayers();
     instance.rules = new Rules();
@@ -351,8 +369,8 @@ function Puzzlescript () {
             instance.layers.toString(),
             instance.rules.headerString(),
             instance.win_conditions.headerString(),
-            instance.levels.headerString(),
-            instance.levels.toString()
+            instance.tile_map.headerString(),
+            instance.tile_map.toString()
         ].join("<br><br>").replace(/\n/g, "<br>");
 
     }
@@ -375,38 +393,44 @@ function Puzzlescript () {
         // TODO the indices x and y should be subsequent integers, and then
         // we should use multiplication to take them to pixel addresses
         for (var y = 0; y < upload.img.height; y = y + bigstep) {
-            instance.levels[y / bigstep] = [];
+            instance.tile_map[y / bigstep] = instance.tile_map[y / bigstep] || [];
 
             for (var x = 0; x < upload.img.width; x = x + bigstep) {
                 var p = new PuzzleTile();
+                var symbol;
 
                 // read in the colour of the top-left pixel of every PIXEL_DIM square
                 for (var j = 0; j < bigstep; j = j + step) {
                     for (var i = 0; i < bigstep; i = i + step) {
-                        var hex = image_data.readPixelDataHex(x + i, y + j),
-                        symbol = p.addColor(hex); // grab the ascii for this hex colour
+                        var hex = image_data.readPixelDataHex(x + i, y + j);
+                        var color_index = p.addColor(hex); // add the colour to the palette and grab its index
 
-                        p.pushSymbol(symbol); // add it to the tile
+                        p.pushSymbol(color_index); // add it to the tile
 
                         // make tile
                         // pixel_data = pixel_data.concat(image_data.readPixelData(x + i, y + j));
                     }
                 }
 
-                tile_name = p.getName(); // TODO replace with a proper hash
-
-                // TODO this should be an instance
-                symbol = instance.legend.findOrCreate(tile_name); // look up or generate the legend
-
-                instance.levels[y / bigstep][x / bigstep] = symbol;
+                tile_name = p.getName(); // TODO replace with a proper unique identifier
 
                 // if a tile is new
                 if (instance.objects.add(tile_name, p)) {
                     instance.layers.add(tile_name);
                 }
+
+                // at this point, if the tile map already has a symbol in that position
+                // then that symbol in the legend should be replaced with "this and that"
+                if (instance.tile_map[y / bigstep][x / bigstep] == undefined) {
+                    symbol = instance.legend.findOrCreate(tile_name); // look up or generate the legend
+
+                    instance.tile_map[y / bigstep][x / bigstep] = symbol;
+                } else {
+                    symbol = instance.tile_map[y / bigstep][x / bigstep];
+                    instance.legend.composeTile(symbol, tile_name);
+                }
             }
         }
-
     }
 
     return instance;
