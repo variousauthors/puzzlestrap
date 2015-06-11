@@ -97,7 +97,7 @@ PuzzleTile = function PuzzleTile () {
 
         return cached_string || (cached_string = [
             name,
-            Object.keys(colors).map(function (c) { return "#" + c; }).join(" "),
+            Object.keys(colors).map(function (c) { return (c == "transparent") ? c : "#" + c; }).join(" "),
             map.join("\n")
         ].join("\n"));
     };
@@ -175,14 +175,19 @@ Legend = function Legend () {
 
     // replace an existing legend entry with a composite
     // so,
-    // T = some_tile
+    // i = some_tile
     // becomes,
-    // T = some_tile and other_tile
+    // j = some_tile and other_tile
     // we aren't going to check for layer collisions because currently
     // we only allow layers to be added all at once
-    instance.composeTile = function composeTile (symbol, tile_name) {
-        if (instance.legend[symbol] == undefined) { throw new Error("Tried to compose a symbol when the original was undefined."); }
-        if (instance.legend[symbol].indexOf(tile_name) > 0) { return; }
+    instance.composeTile = function composeTile (new_symbol, old_symbol) {
+        var new_tile_name = instance.legend[new_symbol];
+        var old_tile_name = instance.legend[old_symbol];
+
+        if (new_tile_name === undefined) { throw new Error("Tried to compose a symbol when the original was undefined."); }
+        if (old_tile_name === undefined) { throw new Error("Tried to compose a symbol with an undefined symbol."); }
+
+        if (instance.legend[new_symbol].indexOf(tile_name) > 0) { return; } // we already ran this composition
 
         instance.legend[symbol] = instance.legend[symbol] + " and " + tile_name;
     }
@@ -403,7 +408,10 @@ function Puzzlescript () {
                 // TODO if the tile is alpha we should skip it?
                 for (var j = 0; j < bigstep; j = j + step) {
                     for (var i = 0; i < bigstep; i = i + step) {
+                        var alpha = image_data.readPixelData(x + i, y + j)[3]; // grab the alpha channel
                         var hex = image_data.readPixelDataHex(x + i, y + j);
+
+                        hex = (alpha == 0) ? "transparent" : hex;
                         var color_index = p.addColor(hex); // add the colour to the palette and grab its index
 
                         p.pushSymbol(color_index); // add it to the tile
@@ -421,15 +429,17 @@ function Puzzlescript () {
                 }
 
                 // at this point, if the tile map already has a symbol in that position
-                // then that symbol in the legend should be replaced with "this and that"
+                // then that symbol in the legend should be replaced with a new symbol representing "this and that"
                 if (instance.tile_map[y / bigstep][x / bigstep] == undefined) {
                     symbol = instance.legend.findOrCreate(tile_name); // look up or generate the legend
 
-                    instance.tile_map[y / bigstep][x / bigstep] = symbol;
                 } else {
-                    symbol = instance.tile_map[y / bigstep][x / bigstep];
-                    instance.legend.composeTile(symbol, tile_name);
+                    var old_tile_name = instance.legend.legend[instance.tile_map[y / bigstep][x / bigstep]];
+
+                    symbol = instance.legend.findOrCreate(old_tile_name + " and " + tile_name); // look up the composite
                 }
+
+                instance.tile_map[y / bigstep][x / bigstep] = symbol;
             }
         }
     }
